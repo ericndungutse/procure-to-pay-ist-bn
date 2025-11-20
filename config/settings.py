@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 from decouple import config
 
@@ -41,14 +42,31 @@ INSTALLED_APPS = [
 ]
 AUTH_USER_MODEL = 'accounts.User'
 
+# config/settings.py
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        # This tells DRF to look for a JWT token in the 'Authorization: Bearer <token>' header
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        # Denies access by default unless authenticated (used by your future protected views)
+        'rest_framework.permissions.IsAuthenticated',
+    )
+}
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware', 
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+APPEND_SLASH = False
 
 ROOT_URLCONF = 'config.urls'
 
@@ -129,3 +147,25 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+SIMPLE_JWT = {
+    # Access Token: Short lifespan (e.g., 5-15 minutes). Used to access protected resources.
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    
+    # Refresh Token: Long lifespan (e.g., 1 day to 30 days). Used only to get a new Access Token.
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    
+    # Identifies your User model's ID field (UUID 'id' in your case)
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id', 
+    
+    # Enhances security by invalidating the used refresh token when a new one is issued
+    'ROTATE_REFRESH_TOKENS': True, 
+    'BLACKLIST_AFTER_ROTATION': True,
+    
+    # Use Django's SECRET_KEY to sign the tokens securely
+    'SIGNING_KEY': config('SECRET_KEY'), 
+    'ALGORITHM': 'HS256',
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
