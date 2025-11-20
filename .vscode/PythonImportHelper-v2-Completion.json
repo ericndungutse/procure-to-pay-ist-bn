@@ -1,5 +1,29 @@
 [
     {
+        "label": "BaseCommand",
+        "importPath": "django.core.management.base",
+        "description": "django.core.management.base",
+        "isExtraImport": true,
+        "detail": "django.core.management.base",
+        "documentation": {}
+    },
+    {
+        "label": "get_user_model",
+        "importPath": "django.contrib.auth",
+        "description": "django.contrib.auth",
+        "isExtraImport": true,
+        "detail": "django.contrib.auth",
+        "documentation": {}
+    },
+    {
+        "label": "IntegrityError",
+        "importPath": "django.db.utils",
+        "description": "django.db.utils",
+        "isExtraImport": true,
+        "detail": "django.db.utils",
+        "documentation": {}
+    },
+    {
         "label": "django.contrib.auth.models",
         "kind": 6,
         "isExtraImport": true,
@@ -25,24 +49,6 @@
         "documentation": {}
     },
     {
-        "label": "django.contrib.auth.validators",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "django.contrib.auth.validators",
-        "description": "django.contrib.auth.validators",
-        "detail": "django.contrib.auth.validators",
-        "documentation": {}
-    },
-    {
-        "label": "django.utils.timezone",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "django.utils.timezone",
-        "description": "django.utils.timezone",
-        "detail": "django.utils.timezone",
-        "documentation": {}
-    },
-    {
         "label": "uuid",
         "kind": 6,
         "isExtraImport": true,
@@ -61,30 +67,6 @@
     },
     {
         "label": "models",
-        "importPath": "django.db",
-        "description": "django.db",
-        "isExtraImport": true,
-        "detail": "django.db",
-        "documentation": {}
-    },
-    {
-        "label": "migrations",
-        "importPath": "django.db",
-        "description": "django.db",
-        "isExtraImport": true,
-        "detail": "django.db",
-        "documentation": {}
-    },
-    {
-        "label": "models",
-        "importPath": "django.db",
-        "description": "django.db",
-        "isExtraImport": true,
-        "detail": "django.db",
-        "documentation": {}
-    },
-    {
-        "label": "migrations",
         "importPath": "django.db",
         "description": "django.db",
         "isExtraImport": true,
@@ -198,30 +180,21 @@
         "documentation": {}
     },
     {
+        "label": "Command",
+        "kind": 6,
+        "importPath": "accounts.management.commands.seed_users",
+        "description": "accounts.management.commands.seed_users",
+        "peekOfCode": "class Command(BaseCommand):\n    help = 'Creates initial users (staff, approvers, finance admin) for the application.'\n    def handle(self, *args, **options):\n        user_model = get_user_model()\n        # Define roles from the model's TextChoices\n        ROLES = {\n            'STAFF': \"staff\",\n            'APPROVER_L1': \"approver-level-1\",\n            'APPROVER_L2': \"approver-level-2\",\n            'FINANCE': \"finance\",",
+        "detail": "accounts.management.commands.seed_users",
+        "documentation": {}
+    },
+    {
         "label": "Migration",
         "kind": 6,
         "importPath": "accounts.migrations.0001_initial",
         "description": "accounts.migrations.0001_initial",
-        "peekOfCode": "class Migration(migrations.Migration):\n    initial = True\n    dependencies = [\n        ('auth', '0012_alter_user_first_name_max_length'),\n    ]\n    operations = [\n        migrations.CreateModel(\n            name='User',\n            fields=[\n                ('password', models.CharField(max_length=128, verbose_name='password')),",
+        "peekOfCode": "class Migration(migrations.Migration):\n    initial = True\n    dependencies = [\n    ]\n    operations = [\n        migrations.CreateModel(\n            name='User',\n            fields=[\n                ('password', models.CharField(max_length=128, verbose_name='password')),\n                ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),",
         "detail": "accounts.migrations.0001_initial",
-        "documentation": {}
-    },
-    {
-        "label": "Migration",
-        "kind": 6,
-        "importPath": "accounts.migrations.0002_alter_user_options_remove_user_first_name_and_more",
-        "description": "accounts.migrations.0002_alter_user_options_remove_user_first_name_and_more",
-        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('accounts', '0001_initial'),\n    ]\n    operations = [\n        migrations.AlterModelOptions(\n            name='user',\n            options={},\n        ),\n        migrations.RemoveField(",
-        "detail": "accounts.migrations.0002_alter_user_options_remove_user_first_name_and_more",
-        "documentation": {}
-    },
-    {
-        "label": "Migration",
-        "kind": 6,
-        "importPath": "accounts.migrations.0003_remove_user_groups_remove_user_is_superuser_and_more",
-        "description": "accounts.migrations.0003_remove_user_groups_remove_user_is_superuser_and_more",
-        "peekOfCode": "class Migration(migrations.Migration):\n    dependencies = [\n        ('accounts', '0002_alter_user_options_remove_user_first_name_and_more'),\n    ]\n    operations = [\n        migrations.RemoveField(\n            model_name='user',\n            name='groups',\n        ),\n        migrations.RemoveField(",
-        "detail": "accounts.migrations.0003_remove_user_groups_remove_user_is_superuser_and_more",
         "documentation": {}
     },
     {

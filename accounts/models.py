@@ -26,6 +26,8 @@ class User(AbstractBaseUser):
         choices=Role.choices,
         default=Role.STAFF
     )
+    
+    is_superuser = models.BooleanField(default=False)
 
     # CRITICAL: Login is based on email
     USERNAME_FIELD = 'email' 
