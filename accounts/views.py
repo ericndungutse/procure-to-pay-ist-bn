@@ -31,7 +31,3 @@ class LoginView(generics.GenericAPIView):
     
     return Response(response, status=status.HTTP_200_OK)
   
-  
-class AccoutDetailsView(generics.GenericAPIView):
-  def get(self, request, *args, **kwargs):
-    return Response({"me": "is me"}, status=status.HTTP_200_OK)
