@@ -31,9 +31,9 @@ class PurchaseRequest(models.Model):
         related_name='purchase_requests',
         db_column='created_by'
     )
-    proforma = models.CharField(max_length=255, blank=True, null=True)
-    receipt = models.CharField(max_length=255, blank=True, null=True)
-    purchase_order = models.CharField(max_length=255, blank=True, null=True)
+    proforma = models.URLField(max_length=500, blank=True, null=True)
+    receipt = models.URLField(max_length=500, blank=True, null=True)
+    purchase_order = models.URLField(max_length=500, blank=True, null=True)
     created_at = models.DateField(auto_now_add=True)
     approval_levels = models.CharField(
         max_length=20,
