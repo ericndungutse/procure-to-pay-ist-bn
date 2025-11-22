@@ -1,9 +1,9 @@
 from rest_framework.response import Response
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
 from purchase_requests.permissions import IsStaffOrReadOnly
 from .models import PurchaseRequest
-from .serializers import PurchaseRequestCreateSerializer
+from .serializers import PurchaseRequestCreateSerializer, PurchaseRequestListSerializer
+from .services import PurchaseRequestService
 
 
 class PurchaseRequestListCreateView(generics.ListCreateAPIView):
@@ -13,6 +13,12 @@ class PurchaseRequestListCreateView(generics.ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return PurchaseRequestCreateSerializer
+        return PurchaseRequestListSerializer
+
+    def get_queryset(self):
+        if self.request.method == 'GET':
+            return PurchaseRequestService.get_filtered_queryset(self.request.user)
+        return super().get_queryset()
 
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -21,7 +27,11 @@ class PurchaseRequestListCreateView(generics.ListCreateAPIView):
         response = {
             "status": "success",
             "message": "Purchase requests retrieved successfully",
-            "data": serializer.data
+            "size": len(serializer.data),
+            "data": {
+                "size": len(serializer.data),
+                "purchase_requests": serializer.data
+            }
         }
         
         return Response(response, status=status.HTTP_200_OK)
