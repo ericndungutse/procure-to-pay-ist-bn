@@ -54,3 +54,420 @@ class PurchaseRequestTestCase(APITestCase):
         response = self.client.post(PURCHASE_REQUEST_URL, self.purchase_data, format='json')
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_staff_can_get_only_own_purchase_requests(self):
+        """Staff user should only see their own purchase requests"""
+        # Create another staff user
+        other_staff_user = User.objects.create_user(
+            email='otherstaff@test.com',
+            password='StrongPassword123',
+            username='otherstaffuser',
+            full_name='Other Staff User',
+            role='staff'
+        )
+
+        # Create purchase requests for both staff users
+        pr1 = PurchaseRequest.objects.create(
+            title="My Request",
+            amount=1000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+        
+        pr2 = PurchaseRequest.objects.create(
+            title="Other Staff Request",
+            amount=2000,
+            created_by=other_staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+
+        # Staff user should only see their own request
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(PURCHASE_REQUEST_URL)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        assert response_json['status'] == 'success'
+        assert response_json['message'] == 'Purchase requests retrieved successfully'
+        assert response_json['size'] == 1
+        assert len(response_json['data']['purchase_requests']) == 1
+        assert response_json['data']['size'] == 1
+        
+        # Check the purchase request data
+        pr_data = response_json['data']['purchase_requests'][0]
+        assert pr_data['id'] == str(pr1.id)
+        assert pr_data['title'] == pr1.title
+        assert pr_data['amount'] == pr1.amount
+        assert pr_data['status'] == pr1.status
+        assert pr_data['created_by_name'] == self.staff_user.full_name
+        assert 'created_at' in pr_data
+
+    def test_approver_can_get_all_purchase_requests(self):
+        """Approver user should see all purchase requests"""
+        # Create approver user
+        approver = User.objects.create_user(
+            email='approver@test.com',
+            password='StrongPassword123',
+            username='approveruser',
+            full_name='Approver User',
+            role='approver-level-1'
+        )
+
+        # Create another staff user
+        other_staff_user = User.objects.create_user(
+            email='staff2@test.com',
+            password='StrongPassword123',
+            username='staff2user',
+            full_name='Staff User 2',
+            role='staff'
+        )
+
+        # Create purchase requests for both users
+        pr1 = PurchaseRequest.objects.create(
+            title="Request 1",
+            amount=1000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+        
+        pr2 = PurchaseRequest.objects.create(
+            title="Request 2",
+            amount=2000,
+            created_by=other_staff_user,
+            status=PurchaseRequest.Status.APPROVED
+        )
+
+        # Approver should see all requests
+        self.client.force_authenticate(user=approver)
+        response = self.client.get(PURCHASE_REQUEST_URL)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        assert response_json['status'] == 'success'
+        assert response_json['size'] == 2
+        assert len(response_json['data']['purchase_requests']) == 2
+        
+        # Verify both requests are present
+        pr_ids = [pr['id'] for pr in response_json['data']['purchase_requests']]
+        assert str(pr1.id) in pr_ids
+        assert str(pr2.id) in pr_ids
+
+    def test_finance_can_get_all_purchase_requests(self):
+        """Finance user should see all purchase requests"""
+        # Create finance user
+        finance_user = User.objects.create_user(
+            email='finance@test.com',
+            password='StrongPassword123',
+            username='financeuser',
+            full_name='Finance User',
+            role='finance'
+        )
+
+        # Create purchase requests from different users
+        pr1 = PurchaseRequest.objects.create(
+            title="Finance Request 1",
+            amount=1500,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+        
+        pr2 = PurchaseRequest.objects.create(
+            title="Finance Request 2",
+            amount=3000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.REJECTED
+        )
+
+        # Finance user should see all requests
+        self.client.force_authenticate(user=finance_user)
+        response = self.client.get(PURCHASE_REQUEST_URL)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        assert response_json['status'] == 'success'
+        assert response_json['size'] == 2
+        assert len(response_json['data']['purchase_requests']) == 2
+
+    def test_get_all_purchase_requests_response_structure(self):
+        """Test that GET response contains all required fields"""
+        # Update staff user with full_name for proper testing
+        self.staff_user.full_name = 'Staff Test User'
+        self.staff_user.save()
+
+        # Create a purchase request
+        pr = PurchaseRequest.objects.create(
+            title="Test Request",
+            amount=5000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(PURCHASE_REQUEST_URL)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        # Check response structure
+        assert 'status' in response_json
+        assert 'message' in response_json
+        assert 'size' in response_json
+        assert 'data' in response_json
+        assert 'size' in response_json['data']
+        assert 'purchase_requests' in response_json['data']
+        
+        # Check purchase request fields
+        pr_data = response_json['data']['purchase_requests'][0]
+        assert 'id' in pr_data
+        assert 'title' in pr_data
+        assert 'amount' in pr_data
+        assert 'status' in pr_data
+        assert 'created_at' in pr_data
+        assert 'created_by_name' in pr_data
+        
+        # Verify field values
+        assert pr_data['id'] == str(pr.id)
+        assert pr_data['title'] == pr.title
+        assert pr_data['amount'] == pr.amount
+        assert pr_data['status'] == pr.status
+        assert pr_data['created_by_name'] == self.staff_user.full_name
+
+    def test_get_all_purchase_requests_empty_list(self):
+        """Test GET request when there are no purchase requests"""
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(PURCHASE_REQUEST_URL)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        assert response_json['status'] == 'success'
+        assert response_json['size'] == 0
+        assert response_json['data']['size'] == 0
+        assert len(response_json['data']['purchase_requests']) == 0
+
+    def test_staff_can_retrieve_own_purchase_request(self):
+        """Staff user should be able to retrieve their own purchase request"""
+        # Update staff user with full_name
+        self.staff_user.full_name = 'Staff Test User'
+        self.staff_user.save()
+
+        # Create a purchase request
+        pr = PurchaseRequest.objects.create(
+            title="My Purchase Request",
+            description="Test description",
+            amount=5000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING,
+            proforma="https://example.com/proforma.pdf",
+            receipt="https://example.com/receipt.pdf",
+            purchase_order="https://example.com/po.pdf"
+        )
+
+        detail_url = reverse('purchase-request-retrieve', kwargs={'pk': pr.id})
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(detail_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        assert response_json['status'] == 'success'
+        assert response_json['message'] == 'Purchase request retrieved successfully'
+        assert 'data' in response_json
+        assert 'purchase_request' in response_json['data']
+        
+        # Check all fields are present
+        pr_data = response_json['data']['purchase_request']
+        assert pr_data['id'] == str(pr.id)
+        assert pr_data['title'] == pr.title
+        assert pr_data['description'] == pr.description
+        assert pr_data['amount'] == pr.amount
+        assert pr_data['status'] == pr.status
+        assert pr_data['created_by'] == self.staff_user.full_name
+        assert pr_data['proforma'] == pr.proforma
+        assert pr_data['receipt'] == pr.receipt
+        assert pr_data['purchase_order'] == pr.purchase_order
+        assert 'created_at' in pr_data
+
+    def test_staff_cannot_retrieve_other_user_purchase_request(self):
+        """Staff user should not be able to retrieve another user's purchase request"""
+        # Create another staff user
+        other_staff_user = User.objects.create_user(
+            email='otherstaff@test.com',
+            password='StrongPassword123',
+            username='otherstaffuser',
+            full_name='Other Staff User',
+            role='staff'
+        )
+
+        # Create a purchase request for the other staff user
+        pr = PurchaseRequest.objects.create(
+            title="Other User Request",
+            description="Another user's request",
+            amount=3000,
+            created_by=other_staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+
+        detail_url = reverse('purchase-request-retrieve', kwargs={'pk': pr.id})
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(detail_url)
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_approver_can_retrieve_any_purchase_request(self):
+        """Approver user should be able to retrieve any purchase request"""
+        # Create approver user
+        approver = User.objects.create_user(
+            email='approver@test.com',
+            password='StrongPassword123',
+            username='approveruser',
+            full_name='Approver User',
+            role='approver-level-1'
+        )
+
+        # Create a purchase request by staff user
+        pr = PurchaseRequest.objects.create(
+            title="Request for Approval",
+            description="Needs approval",
+            amount=7500,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+
+        detail_url = reverse('purchase-request-retrieve', kwargs={'pk': pr.id})
+        self.client.force_authenticate(user=approver)
+        response = self.client.get(detail_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        assert response_json['status'] == 'success'
+        pr_data = response_json['data']['purchase_request']
+        assert pr_data['id'] == str(pr.id)
+        assert pr_data['title'] == pr.title
+
+    def test_finance_can_retrieve_any_purchase_request(self):
+        """Finance user should be able to retrieve any purchase request"""
+        # Create finance user
+        finance_user = User.objects.create_user(
+            email='finance@test.com',
+            password='StrongPassword123',
+            username='financeuser',
+            full_name='Finance User',
+            role='finance'
+        )
+
+        # Create a purchase request by staff user
+        pr = PurchaseRequest.objects.create(
+            title="Finance Review Request",
+            description="Finance review needed",
+            amount=10000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.APPROVED
+        )
+
+        detail_url = reverse('purchase-request-retrieve', kwargs={'pk': pr.id})
+        self.client.force_authenticate(user=finance_user)
+        response = self.client.get(detail_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        assert response_json['status'] == 'success'
+        pr_data = response_json['data']['purchase_request']
+        assert pr_data['id'] == str(pr.id)
+        assert pr_data['title'] == pr.title
+        assert pr_data['status'] == PurchaseRequest.Status.APPROVED
+
+    def test_retrieve_nonexistent_purchase_request_returns_404(self):
+        """Retrieving a non-existent purchase request should return 404"""
+        import uuid
+        non_existent_id = uuid.uuid4()
+
+        detail_url = reverse('purchase-request-retrieve', kwargs={'pk': non_existent_id})
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(detail_url)
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retrieve_purchase_request_response_structure(self):
+        """Test that retrieve response contains all required fields"""
+        # Update staff user with full_name
+        self.staff_user.full_name = 'Staff Test User'
+        self.staff_user.save()
+
+        # Create a purchase request with all fields
+        pr = PurchaseRequest.objects.create(
+            title="Complete Request",
+            description="Complete description with all details",
+            amount=15000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING,
+            proforma="https://example.com/proforma.pdf",
+            receipt=None,
+            purchase_order="https://example.com/po.pdf"
+        )
+
+        detail_url = reverse('purchase-request-retrieve', kwargs={'pk': pr.id})
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(detail_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        # Check response structure
+        assert 'status' in response_json
+        assert 'message' in response_json
+        assert 'data' in response_json
+        assert 'purchase_request' in response_json['data']
+        
+        # Check all purchase request fields
+        pr_data = response_json['data']['purchase_request']
+        required_fields = [
+            'id', 'title', 'description', 'amount', 'status',
+            'created_at', 'created_by', 'proforma', 'receipt', 'purchase_order'
+        ]
+        
+        for field in required_fields:
+            assert field in pr_data, f"Field '{field}' is missing in response"
+        
+        # Verify field values match
+        assert pr_data['id'] == str(pr.id)
+        assert pr_data['title'] == pr.title
+        assert pr_data['description'] == pr.description
+        assert pr_data['amount'] == pr.amount
+        assert pr_data['status'] == pr.status
+        assert pr_data['created_by'] == self.staff_user.full_name
+        assert pr_data['proforma'] == pr.proforma
+        assert pr_data['receipt'] == pr.receipt
+        assert pr_data['purchase_order'] == pr.purchase_order
+
+    def test_retrieve_purchase_request_with_null_fields(self):
+        """Test retrieving purchase request with null/empty optional fields"""
+        # Create purchase request with minimal fields
+        pr = PurchaseRequest.objects.create(
+            title="Minimal Request",
+            description=None,
+            amount=500,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING,
+            proforma=None,
+            receipt=None,
+            purchase_order=None
+        )
+
+        detail_url = reverse('purchase-request-retrieve', kwargs={'pk': pr.id})
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(detail_url)
+
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        pr_data = response_json['data']['purchase_request']
+        assert pr_data['description'] is None or pr_data['description'] == ''
+        assert pr_data['proforma'] is None or pr_data['proforma'] == ''
+        assert pr_data['receipt'] is None or pr_data['receipt'] == ''
+        assert pr_data['purchase_order'] is None or pr_data['purchase_order'] == ''
