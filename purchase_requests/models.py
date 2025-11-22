@@ -1,6 +1,10 @@
 from django.db import models
 from accounts.models import User
+import uuid
 
+
+def default_approval_levels():
+    return ['approver-level-1', 'approver-level-2']
 
 class PurchaseRequest(models.Model):
     """
@@ -12,11 +16,7 @@ class PurchaseRequest(models.Model):
         APPROVED = 'approved', 'Approved'
         REJECTED = 'rejected', 'Rejected'
     
-    class ApprovalLevel(models.TextChoices):
-        APPROVER_LEVEL_1 = 'approver-level-1', 'Approver Level 1'
-        APPROVER_LEVEL_2 = 'approver-level-2', 'Approver Level 2'
-    
-    id = models.BigAutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     amount = models.IntegerField()
@@ -35,11 +35,9 @@ class PurchaseRequest(models.Model):
     receipt = models.URLField(max_length=500, blank=True, null=True)
     purchase_order = models.URLField(max_length=500, blank=True, null=True)
     created_at = models.DateField(auto_now_add=True)
-    approval_levels = models.CharField(
-        max_length=20,
-        choices=ApprovalLevel.choices,
-        blank=True,
-        null=True
+    
+    approval_levels = models.JSONField(
+        default=default_approval_levels
     )
 
     class Meta:
