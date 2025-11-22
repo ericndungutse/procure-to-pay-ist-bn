@@ -67,8 +67,7 @@ class PurchaseRequestRetrieveView(generics.RetrieveAPIView):
     
 class PurchaseRequestDecisionView(APIView):
     def post(self, request, pk):
-        # TODO: GETTING PURCHASE SHOULD BE IN SERVICE
-        purchase_request = PurchaseRequest.objects.get(pk=pk)
+        purchase_request = PurchaseRequestService.get_purchase_request_by_id(request.user, pk)
         
         serializer = DecisionCreateSerializer(
             data=request.data,
