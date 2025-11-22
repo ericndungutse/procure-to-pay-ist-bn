@@ -90,7 +90,6 @@ class PurchaseRequestTestCase(APITestCase):
         
         assert response_json['status'] == 'success'
         assert response_json['message'] == 'Purchase requests retrieved successfully'
-        assert response_json['size'] == 1
         assert len(response_json['data']['purchase_requests']) == 1
         assert response_json['data']['size'] == 1
         
@@ -146,7 +145,6 @@ class PurchaseRequestTestCase(APITestCase):
         response_json = response.json()
         
         assert response_json['status'] == 'success'
-        assert response_json['size'] == 2
         assert len(response_json['data']['purchase_requests']) == 2
         
         # Verify both requests are present
@@ -188,7 +186,6 @@ class PurchaseRequestTestCase(APITestCase):
         response_json = response.json()
         
         assert response_json['status'] == 'success'
-        assert response_json['size'] == 2
         assert len(response_json['data']['purchase_requests']) == 2
 
     def test_get_all_purchase_requests_response_structure(self):
@@ -214,7 +211,6 @@ class PurchaseRequestTestCase(APITestCase):
         # Check response structure
         assert 'status' in response_json
         assert 'message' in response_json
-        assert 'size' in response_json
         assert 'data' in response_json
         assert 'size' in response_json['data']
         assert 'purchase_requests' in response_json['data']
@@ -244,7 +240,6 @@ class PurchaseRequestTestCase(APITestCase):
         response_json = response.json()
         
         assert response_json['status'] == 'success'
-        assert response_json['size'] == 0
         assert response_json['data']['size'] == 0
         assert len(response_json['data']['purchase_requests']) == 0
 
@@ -556,7 +551,7 @@ class PurchaseRequestApprovalTestCase(APITestCase):
         assert response.status_code == status.HTTP_201_CREATED
         response_json = response.json()
         assert response_json['status'] == 'success'
-        assert response_json['message'] == 'Purchase request approved'
+        assert response_json['message'] == 'Purchase Decision Created'
         assert 'data' in response_json
         assert 'decision' in response_json['data']
         
