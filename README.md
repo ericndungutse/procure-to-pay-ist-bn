@@ -1,3 +1,5 @@
+[![Pipeline](https://github.com/ericndungutse/procure-to-pay-ist-bn/actions/workflows/pipeline.yml/badge.svg)](https://github.com/ericndungutse/procure-to-pay-ist-bn/actions/workflows/pipeline.yml)
+
 # Procure-to-Pay System
 
 A web-based purchase request management system that streamlines the procurement process from request creation to approval and finance processing.

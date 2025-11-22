@@ -29,7 +29,6 @@ class PurchaseRequestListCreateView(generics.ListCreateAPIView):
         response = {
             "status": "success",
             "message": "Purchase requests retrieved successfully",
-            "size": len(serializer.data),
             "data": {
                 "size": len(serializer.data),
                 "purchase_requests": serializer.data
@@ -79,7 +78,7 @@ class PurchaseRequestDecisionView(APIView):
 
         return Response({
             "status": "success",
-            "message": "Purchase request approved",
+            "message": "Purchase Decision Created",
             "data": {
                 "decision": DecisionCreateSerializer(decision).data
             }
