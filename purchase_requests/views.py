@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework import generics, status
 from purchase_requests.permissions import IsStaffOrReadOnly
 from .models import PurchaseRequest
-from .serializers import PurchaseRequestCreateSerializer, PurchaseRequestListSerializer
+from .serializers import PurchaseRequestCreateSerializer, PurchaseRequestListSerializer, PurchaseRequestDetailSerializer
 from .services import PurchaseRequestService
 
 
@@ -31,6 +31,33 @@ class PurchaseRequestListCreateView(generics.ListCreateAPIView):
             "data": {
                 "size": len(serializer.data),
                 "purchase_requests": serializer.data
+            }
+        }
+        
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class PurchaseRequestRetrieveView(generics.RetrieveAPIView):
+    permission_classes = [IsStaffOrReadOnly]
+    serializer_class = PurchaseRequestDetailSerializer
+
+    def get_object(self):
+        """Get purchase request by ID with access control via service."""
+        request_id = self.kwargs.get('pk')
+        return PurchaseRequestService.get_purchase_request_by_id(
+            self.request.user,
+            request_id
+        )
+
+    def get(self, request, *args, **kwargs):
+        purchase_request = self.get_object()
+        serializer = self.get_serializer(purchase_request)
+        
+        response = {
+            "status": "success",
+            "message": "Purchase request retrieved successfully",
+            "data": {
+                "purchase_request": serializer.data
             }
         }
         

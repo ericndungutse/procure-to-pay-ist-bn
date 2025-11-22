@@ -152,7 +152,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SIMPLE_JWT = {
     # Access Token: Short lifespan (e.g., 5-15 minutes). Used to access protected resources.
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     
     # Refresh Token: Long lifespan (e.g., 1 day to 30 days). Used only to get a new Access Token.
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
