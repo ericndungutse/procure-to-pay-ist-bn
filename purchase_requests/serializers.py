@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import PurchaseRequest
+from purchase_requests.services import DecisionManager
+from .models import PurchaseRequest, Decision
 from accounts.models import User
 
 
@@ -53,3 +54,39 @@ class PurchaseRequestCreateSerializer(serializers.ModelSerializer):
         if request and getattr(request, 'user', None) and 'created_by' not in validated_data:
             validated_data['created_by'] = request.user
         return super().create(validated_data)
+
+
+class DecisionCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating approver decisions on purchase requests."""
+    
+    class Meta:
+        model = Decision
+        fields = [
+            'id',
+            'decision',
+            'comment',
+            'approval_level',
+            'created_at',
+        ]
+        read_only_fields = ['id', 'approval_level', 'created_at']
+    
+    def create(self, validated_data):
+        """
+        Create a decision using the concurrency-safe manager method.
+        """
+        request = self.context.get('request')
+        purchase_request = self.context.get('purchase_request')
+        approver = request.user
+        
+        decision_type = validated_data.get('decision')
+        comment = validated_data.get('comment', None)
+        
+        # Use the safe, atomic manager method
+        decision = DecisionManager.create_decision(
+            purchase_request=purchase_request,
+            approver=approver,
+            decision_type=decision_type,
+            comment=comment
+        )
+        
+        return decision

@@ -2,8 +2,10 @@ from rest_framework.response import Response
 from rest_framework import generics, status
 from purchase_requests.permissions import IsStaffOrReadOnly
 from .models import PurchaseRequest
-from .serializers import PurchaseRequestCreateSerializer, PurchaseRequestListSerializer, PurchaseRequestDetailSerializer
+from .serializers import (DecisionCreateSerializer, PurchaseRequestCreateSerializer,
+    PurchaseRequestDetailSerializer, PurchaseRequestListSerializer)
 from .services import PurchaseRequestService
+from rest_framework.views import APIView
 
 
 class PurchaseRequestListCreateView(generics.ListCreateAPIView):
@@ -62,3 +64,23 @@ class PurchaseRequestRetrieveView(generics.RetrieveAPIView):
         }
         
         return Response(response, status=status.HTTP_200_OK)
+    
+class PurchaseRequestDecisionView(APIView):
+    def post(self, request, pk):
+        purchase_request = PurchaseRequestService.get_purchase_request_by_id(request.user, pk)
+        
+        serializer = DecisionCreateSerializer(
+            data=request.data,
+            context={'request': request, 'purchase_request': purchase_request}
+        )
+        
+        serializer.is_valid(raise_exception=True)
+        decision = serializer.save();
+
+        return Response({
+            "status": "success",
+            "message": "Purchase request approved",
+            "data": {
+                "decision": DecisionCreateSerializer(decision).data
+            }
+        }, status=status.HTTP_201_CREATED)
