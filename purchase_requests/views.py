@@ -1,12 +1,13 @@
 from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
+from purchase_requests.permissions import IsStaffOrReadOnly
 from .models import PurchaseRequest
 from .serializers import PurchaseRequestCreateSerializer
 
 
 class PurchaseRequestListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStaffOrReadOnly]
     queryset = PurchaseRequest.objects.all()
 
     def get_serializer_class(self):
