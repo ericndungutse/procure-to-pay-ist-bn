@@ -4,6 +4,12 @@
 
 A web-based purchase request management system that streamlines the procurement process from request creation to approval and finance processing.
 
+> 📚 **📖 Documentation Available!**
+>
+> - **[Postman API Documentation](https://documenter.getpostman.com/view/50243263/2sB3dHVYGG)** - Interactive API documentation with pre-configured requests and examples
+> - **[Technical Documentation](/docs)** - Detailed architecture diagrams, business process flows, database design, and system documentation  
+>   Includes: System architecture, API flows, database schema, and more!
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -21,7 +27,7 @@ A web-based purchase request management system that streamlines the procurement 
 - [API Documentation](#api-documentation)
 - [Running Tests](#running-tests)
 - [Project Structure](#project-structure)
-- [Additional Documentation](#additional-documentation)
+- [Technical Documentation](#technical-documentation)
 - [Need Help?](#need-help)
 
 ## Overview
@@ -154,18 +160,24 @@ Once your development server is running, you can interact with the API in severa
    - **[Postman API Documentation](https://documenter.getpostman.com/view/50243263/2sB3dHVYGG)**
    - Import the collection into Postman and update the base URL to `http://localhost:8000` for local testing
 
-2. **API Endpoints**: The main endpoints available are:
+2. **API Endpoints**: All available endpoints:
+
+   **Authentication:**
 
    - `POST /api/v1/accounts/login/` - User login
+
+   **Purchase Requests:**
+
    - `GET /api/v1/requests/` - List purchase requests
    - `POST /api/v1/requests/` - Create a purchase request
    - `GET /api/v1/requests/{id}/` - Get purchase request details
+   - `POST /api/v1/requests/{id}/approve` - Approve a purchase request (Approvers only)
+   - `POST /api/v1/requests/{id}/reject` - Reject a purchase request (Approvers only)
+   - `PATCH /api/v1/requests/{id}/upload-receipt` - Update receipt URL for approved request (Staff only)
 
 3. **Testing Tools**: You can also use tools like curl, HTTPie, or any REST client to test the endpoints.
 
 **Note**: The Postman documentation shows example requests. When testing locally, make sure your development server is running and use `http://localhost:8000` as the base URL.
-
-For additional technical documentation and architecture details, see the `/docs` folder.
 
 ## Running Tests
 
@@ -180,11 +192,18 @@ pytest
 - `/accounts` - User authentication and management
 - `/purchase_requests` - Purchase request functionality
 - `/config` - Django project configuration
-- `/docs` - Additional documentation and diagrams
+- `/docs` - [Technical documentation](/docs) (architecture, flows, database design)
 
-## Additional Documentation
+## Technical Documentation
 
-- **Technical Documentation**: For architecture diagrams and database design, check the `/docs` folder
+Comprehensive technical documentation is available in the [`/docs`](/docs) folder:
+
+- **[System Architecture](/docs/system_docs/architecture.md)** - System design, architecture layers, and technology stack
+- **[Business Process Flows](/docs/flows/)** - Sequence diagrams for key workflows:
+  - Purchase Request Creation
+  - Approval/Decision Workflow
+  - Receipt Upload Process
+- **[Database Design](/docs/database/)** - Database schema and logical design
 
 ## Need Help?
 
@@ -196,4 +215,4 @@ If you encounter any issues during setup, please check:
 4. Database migrations have been applied
 5. The development server is running before testing API endpoints
 
-For technical documentation and detailed guides, refer to the `/docs` folder. For API request examples and testing, use the [Postman API Documentation](https://documenter.getpostman.com/view/50243263/2sB3dHVYGG).
+For API request examples and testing, use the [Postman API Documentation](https://documenter.getpostman.com/view/50243263/2sB3dHVYGG). For technical documentation, see the [Technical Documentation](#technical-documentation) section above.
