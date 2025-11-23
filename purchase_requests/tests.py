@@ -1,6 +1,7 @@
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
+from rest_framework.response import Response
 from rest_framework import status
 from .models import PurchaseRequest, Decision
 
@@ -8,7 +9,7 @@ User = get_user_model()
 PURCHASE_REQUEST_URL = reverse('purchase-request-list-create')
 
 class PurchaseRequestTestCase(APITestCase):
-
+    client: APIClient
     def setUp(self):
         self.staff_user = User.objects.create_user(
             email='staff@test.com',
@@ -38,8 +39,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.post(PURCHASE_REQUEST_URL, self.purchase_data, format='json')
 
-        assert response.status_code == status.HTTP_201_CREATED
-        response_json = response.json()
+        assert response.status_code == status.HTTP_201_CREATED 
+        response_json = response.json() 
         pr = PurchaseRequest.objects.get(id=response_json.get('id'))
   
         assert pr.created_by == self.staff_user
@@ -53,7 +54,7 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.normal_user)
         response = self.client.post(PURCHASE_REQUEST_URL, self.purchase_data, format='json')
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_403_FORBIDDEN 
 
     def test_staff_can_get_only_own_purchase_requests(self):
         """Staff user should only see their own purchase requests"""
@@ -74,7 +75,7 @@ class PurchaseRequestTestCase(APITestCase):
             status=PurchaseRequest.Status.PENDING
         )
         
-        pr2 = PurchaseRequest.objects.create(
+        _ = PurchaseRequest.objects.create(
             title="Other Staff Request",
             amount=2000,
             created_by=other_staff_user,
@@ -85,8 +86,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(PURCHASE_REQUEST_URL)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         assert response_json['status'] == 'success'
         assert response_json['message'] == 'Purchase requests retrieved successfully'
@@ -99,7 +100,7 @@ class PurchaseRequestTestCase(APITestCase):
         assert pr_data['title'] == pr1.title
         assert pr_data['amount'] == pr1.amount
         assert pr_data['status'] == pr1.status
-        assert pr_data['created_by_name'] == self.staff_user.full_name
+        assert pr_data['created_by_name'] == self.staff_user.full_name 
         assert 'created_at' in pr_data
 
     def test_approver_can_get_all_purchase_requests(self):
@@ -141,8 +142,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=approver)
         response = self.client.get(PURCHASE_REQUEST_URL)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         assert response_json['status'] == 'success'
         assert len(response_json['data']['purchase_requests']) == 2
@@ -164,14 +165,14 @@ class PurchaseRequestTestCase(APITestCase):
         )
 
         # Create purchase requests from different users
-        pr1 = PurchaseRequest.objects.create(
+        _ = PurchaseRequest.objects.create(
             title="Finance Request 1",
             amount=1500,
             created_by=self.staff_user,
             status=PurchaseRequest.Status.PENDING
         )
         
-        pr2 = PurchaseRequest.objects.create(
+        _ = PurchaseRequest.objects.create(
             title="Finance Request 2",
             amount=3000,
             created_by=self.staff_user,
@@ -183,7 +184,7 @@ class PurchaseRequestTestCase(APITestCase):
         response = self.client.get(PURCHASE_REQUEST_URL)
 
         assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        response_json = response.json() 
         
         assert response_json['status'] == 'success'
         assert len(response_json['data']['purchase_requests']) == 2
@@ -191,7 +192,7 @@ class PurchaseRequestTestCase(APITestCase):
     def test_get_all_purchase_requests_response_structure(self):
         """Test that GET response contains all required fields"""
         # Update staff user with full_name for proper testing
-        self.staff_user.full_name = 'Staff Test User'
+        self.staff_user.full_name = 'Staff Test User' 
         self.staff_user.save()
 
         # Create a purchase request
@@ -205,8 +206,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(PURCHASE_REQUEST_URL)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         # Check response structure
         assert 'status' in response_json
@@ -229,15 +230,15 @@ class PurchaseRequestTestCase(APITestCase):
         assert pr_data['title'] == pr.title
         assert pr_data['amount'] == pr.amount
         assert pr_data['status'] == pr.status
-        assert pr_data['created_by_name'] == self.staff_user.full_name
+        assert pr_data['created_by_name'] == self.staff_user.full_name 
 
     def test_get_all_purchase_requests_empty_list(self):
         """Test GET request when there are no purchase requests"""
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(PURCHASE_REQUEST_URL)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         assert response_json['status'] == 'success'
         assert response_json['data']['size'] == 0
@@ -246,7 +247,7 @@ class PurchaseRequestTestCase(APITestCase):
     def test_staff_can_retrieve_own_purchase_request(self):
         """Staff user should be able to retrieve their own purchase request"""
         # Update staff user with full_name
-        self.staff_user.full_name = 'Staff Test User'
+        self.staff_user.full_name = 'Staff Test User' 
         self.staff_user.save()
 
         # Create a purchase request
@@ -265,8 +266,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(detail_url)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         assert response_json['status'] == 'success'
         assert response_json['message'] == 'Purchase request retrieved successfully'
@@ -280,7 +281,7 @@ class PurchaseRequestTestCase(APITestCase):
         assert pr_data['description'] == pr.description
         assert pr_data['amount'] == pr.amount
         assert pr_data['status'] == pr.status
-        assert pr_data['created_by'] == self.staff_user.full_name
+        assert pr_data['created_by'] == self.staff_user.full_name 
         assert pr_data['proforma'] == pr.proforma
         assert pr_data['receipt'] == pr.receipt
         assert pr_data['purchase_order'] == pr.purchase_order
@@ -310,7 +311,7 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(detail_url)
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_403_FORBIDDEN 
 
     def test_approver_can_retrieve_any_purchase_request(self):
         """Approver user should be able to retrieve any purchase request"""
@@ -336,8 +337,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=approver)
         response = self.client.get(detail_url)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         assert response_json['status'] == 'success'
         pr_data = response_json['data']['purchase_request']
@@ -368,8 +369,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=finance_user)
         response = self.client.get(detail_url)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         assert response_json['status'] == 'success'
         pr_data = response_json['data']['purchase_request']
@@ -386,12 +387,12 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(detail_url)
 
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_404_NOT_FOUND 
 
     def test_retrieve_purchase_request_response_structure(self):
         """Test that retrieve response contains all required fields"""
         # Update staff user with full_name
-        self.staff_user.full_name = 'Staff Test User'
+        self.staff_user.full_name = 'Staff Test User' 
         self.staff_user.save()
 
         # Create a purchase request with all fields
@@ -410,8 +411,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(detail_url)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         # Check response structure
         assert 'status' in response_json
@@ -435,7 +436,7 @@ class PurchaseRequestTestCase(APITestCase):
         assert pr_data['description'] == pr.description
         assert pr_data['amount'] == pr.amount
         assert pr_data['status'] == pr.status
-        assert pr_data['created_by'] == self.staff_user.full_name
+        assert pr_data['created_by'] == self.staff_user.full_name 
         assert pr_data['proforma'] == pr.proforma
         assert pr_data['receipt'] == pr.receipt
         assert pr_data['purchase_order'] == pr.purchase_order
@@ -458,8 +459,8 @@ class PurchaseRequestTestCase(APITestCase):
         self.client.force_authenticate(user=self.staff_user)
         response = self.client.get(detail_url)
 
-        assert response.status_code == status.HTTP_200_OK
-        response_json = response.json()
+        assert response.status_code == status.HTTP_200_OK 
+        response_json = response.json() 
         
         pr_data = response_json['data']['purchase_request']
         assert pr_data['description'] is None or pr_data['description'] == ''
@@ -470,6 +471,7 @@ class PurchaseRequestTestCase(APITestCase):
 
 class PurchaseRequestApprovalTestCase(APITestCase):
     """Test cases for purchase request approval functionality."""
+    client: APIClient
 
     def setUp(self):
         """Set up test data for approval tests."""
@@ -538,20 +540,19 @@ class PurchaseRequestApprovalTestCase(APITestCase):
 
     def test_approver_level_1_can_approve_purchase_request(self):
         """Approver level 1 should be able to approve a purchase request."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Looks good, approved'
         }
         
         response = self.client.post(decision_url, decision_data, format='json')
         
-        assert response.status_code == status.HTTP_201_CREATED
-        response_json = response.json()
+        assert response.status_code == status.HTTP_201_CREATED 
+        response_json = response.json() 
         assert response_json['status'] == 'success'
-        assert response_json['message'] == 'Purchase Decision Created'
+        assert response_json['message'] == 'Purchase Approved Successfully'
         assert 'data' in response_json
         assert 'decision' in response_json['data']
         
@@ -571,25 +572,23 @@ class PurchaseRequestApprovalTestCase(APITestCase):
     def test_approver_level_2_can_approve_after_level_1(self):
         """Approver level 2 should be able to approve after level 1 has approved."""
         # First, level 1 approves
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Level 1 approval'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED 
         
         # Now level 2 approves
         self.client.force_authenticate(user=self.approver_level_2)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Level 2 approval'
         }
         response = self.client.post(decision_url, decision_data, format='json')
         
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED 
         
         # Verify both decisions exist
         assert Decision.objects.filter(
@@ -607,18 +606,17 @@ class PurchaseRequestApprovalTestCase(APITestCase):
 
     def test_approver_level_2_cannot_approve_before_level_1(self):
         """Approver level 2 should not be able to approve before level 1."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_2)
         
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Trying to approve before level 1'
         }
         
         response = self.client.post(decision_url, decision_data, format='json')
         
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        response_json = response.json()
+        assert response.status_code == status.HTTP_400_BAD_REQUEST  
+        response_json = response.json()  
         assert 'Level 1 must make decision before level 2 can approve' in str(response_json)
         
         # Verify no decision was created
@@ -633,17 +631,16 @@ class PurchaseRequestApprovalTestCase(APITestCase):
 
     def test_approver_can_reject_purchase_request(self):
         """Approver should be able to reject a purchase request."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('reject-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.REJECTED,
             'comment': 'Does not meet requirements'
         }
         
         response = self.client.post(decision_url, decision_data, format='json')
         
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Verify decision was created
         decision = Decision.objects.get(
@@ -659,74 +656,70 @@ class PurchaseRequestApprovalTestCase(APITestCase):
 
     def test_rejection_immediately_changes_status(self):
         """When any approver rejects, status should change to REJECTED immediately."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('reject-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.REJECTED,
             'comment': 'Rejected at level 1'
         }
         
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Verify status changed immediately
         self.purchase_request.refresh_from_db()
         assert self.purchase_request.status == PurchaseRequest.Status.REJECTED
         
         # Verify that level 2 cannot approve after rejection
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_2)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Trying to approve after rejection'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'already been rejected' in str(response.json())
+        assert response.status_code == status.HTTP_400_BAD_REQUEST  
+        assert 'already been rejected' in str(response.json())  
 
     def test_non_approver_cannot_approve(self):
         """Non-approver users should not be able to approve purchase requests."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         
         # Test with staff user
         self.client.force_authenticate(user=self.staff_user)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Staff trying to approve'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_403_FORBIDDEN  
         
         # Test with finance user
         self.client.force_authenticate(user=self.finance_user)
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_403_FORBIDDEN  
         
         # Test with normal user
         self.client.force_authenticate(user=self.normal_user)
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_403_FORBIDDEN  
 
     def test_approver_cannot_approve_twice(self):
         """An approver should not be able to approve the same purchase request twice."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'First approval'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Try to approve again
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Second approval attempt'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'already made a decision' in str(response.json())
+        assert response.status_code == status.HTTP_400_BAD_REQUEST 
+        assert 'already made a decision' in str(response.json())  
         
         # Verify only one decision exists
         decisions = Decision.objects.filter(
@@ -737,25 +730,23 @@ class PurchaseRequestApprovalTestCase(APITestCase):
 
     def test_cannot_approve_already_approved_request(self):
         """Should not be able to approve a purchase request that is already fully approved."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         
         # Level 1 approves
         self.client.force_authenticate(user=self.approver_level_1)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Level 1 approval'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Level 2 approves (now fully approved)
         self.client.force_authenticate(user=self.approver_level_2)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Level 2 approval'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Verify status is APPROVED
         self.purchase_request.refresh_from_db()
@@ -764,29 +755,27 @@ class PurchaseRequestApprovalTestCase(APITestCase):
         # Try to approve again with level 1 (should fail)
         self.client.force_authenticate(user=self.approver_level_1)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Trying to approve already approved request'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_400_BAD_REQUEST  
         # The service checks status first, so it returns "already been approved" 
         # before checking if the approver already made a decision
-        response_json = response.json()
+        response_json = response.json() 
         error_message = str(response_json)
         assert 'already been approved' in error_message
 
     def test_cannot_approve_already_rejected_request(self):
         """Should not be able to approve a purchase request that has been rejected."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('reject-purchase-request', kwargs={'pk': self.purchase_request.id})
         
         # Level 1 rejects
         self.client.force_authenticate(user=self.approver_level_1)
         decision_data = {
-            'decision': Decision.DecisionType.REJECTED,
             'comment': 'Rejected'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Verify status is REJECTED
         self.purchase_request.refresh_from_db()
@@ -795,25 +784,23 @@ class PurchaseRequestApprovalTestCase(APITestCase):
         # Try to approve with level 2 (should fail)
         self.client.force_authenticate(user=self.approver_level_2)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Trying to approve rejected request'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert 'already been rejected' in str(response.json())
+        assert response.status_code == status.HTTP_400_BAD_REQUEST  
+        assert 'already been rejected' in str(response.json())  
 
     def test_approval_without_comment(self):
         """Approval should work without a comment (comment is optional)."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED
         }
         
         response = self.client.post(decision_url, decision_data, format='json')
         
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Verify decision was created with null comment
         decision = Decision.objects.get(
@@ -825,18 +812,18 @@ class PurchaseRequestApprovalTestCase(APITestCase):
 
     def test_approval_response_structure(self):
         """Test that approval response has the correct structure."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Test comment'
         }
         
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+
+        assert response.status_code == status.HTTP_201_CREATED  
         
-        response_json = response.json()
+        response_json = response.json()  
         assert 'status' in response_json
         assert 'message' in response_json
         assert 'data' in response_json
@@ -864,22 +851,21 @@ class PurchaseRequestApprovalTestCase(APITestCase):
             approval_levels=['approver-level-2']
         )
         
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': custom_pr.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': custom_pr.id})
         
         # Level 1 should not be able to approve (not in approval_levels)
         self.client.force_authenticate(user=self.approver_level_1)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Trying to approve'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert 'not required for this purchase request' in str(response.json())
+        assert response.status_code == status.HTTP_403_FORBIDDEN  
+        assert 'not required for this purchase request' in str(response.json())  
         
         # Level 2 should be able to approve directly (no level 1 required)
         self.client.force_authenticate(user=self.approver_level_2)
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED  
         
         # Verify status is APPROVED (only one level needed)
         custom_pr.refresh_from_db()
@@ -896,22 +882,21 @@ class PurchaseRequestApprovalTestCase(APITestCase):
             status=PurchaseRequest.Status.PENDING
         )
         
-        decision_url_1 = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
-        decision_url_2 = reverse('decide-on-purchase-request', kwargs={'pk': pr2.id})
+        decision_url_1 = reverse('approve-purchase-request', kwargs={'pk': self.purchase_request.id})
+        decision_url_2 = reverse('approve-purchase-request', kwargs={'pk': pr2.id})
         
         # First approver approves first request
         self.client.force_authenticate(user=self.approver_level_1)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'First approver'
         }
         response = self.client.post(decision_url_1, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED 
         
         # Second approver approves second request
         self.client.force_authenticate(user=self.approver_level_1_alt)
         response = self.client.post(decision_url_2, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED 
         
         # Verify both decisions exist
         assert Decision.objects.filter(
@@ -923,44 +908,19 @@ class PurchaseRequestApprovalTestCase(APITestCase):
             approver=self.approver_level_1_alt
         ).exists()
 
-    def test_approval_requires_valid_decision_type(self):
-        """Test that only valid decision types (approved/rejected) are accepted."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
-        self.client.force_authenticate(user=self.approver_level_1)
-        
-        # Invalid decision type
-        decision_data = {
-            'decision': 'invalid_decision',
-            'comment': 'Invalid decision'
-        }
-        response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_approval_requires_decision_field(self):
-        """Test that decision field is required."""
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': self.purchase_request.id})
-        self.client.force_authenticate(user=self.approver_level_1)
-        
-        # Missing decision field
-        decision_data = {
-            'comment': 'Missing decision field'
-        }
-        response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_approval_nonexistent_purchase_request(self):
         """Test approval of a non-existent purchase request returns 404."""
         import uuid
         non_existent_id = uuid.uuid4()
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': non_existent_id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': non_existent_id})
         self.client.force_authenticate(user=self.approver_level_1)
         
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Approving non-existent request'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert response.status_code == status.HTTP_404_NOT_FOUND 
 
     def test_sequential_approval_with_three_levels(self):
         """Test sequential approval with three approval levels."""
@@ -983,38 +943,35 @@ class PurchaseRequestApprovalTestCase(APITestCase):
             role='approver-level-3'
         )
         
-        decision_url = reverse('decide-on-purchase-request', kwargs={'pk': three_level_pr.id})
+        decision_url = reverse('approve-purchase-request', kwargs={'pk': three_level_pr.id})
         
         # Level 1 approves
         self.client.force_authenticate(user=self.approver_level_1)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Level 1'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED 
         three_level_pr.refresh_from_db()
         assert three_level_pr.status == PurchaseRequest.Status.PENDING
         
         # Level 2 approves
         self.client.force_authenticate(user=self.approver_level_2)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Level 2'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED 
         three_level_pr.refresh_from_db()
         assert three_level_pr.status == PurchaseRequest.Status.PENDING
         
         # Level 3 approves (now fully approved)
         self.client.force_authenticate(user=approver_level_3)
         decision_data = {
-            'decision': Decision.DecisionType.APPROVED,
             'comment': 'Level 3'
         }
         response = self.client.post(decision_url, decision_data, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
+        assert response.status_code == status.HTTP_201_CREATED 
         three_level_pr.refresh_from_db()
         assert three_level_pr.status == PurchaseRequest.Status.APPROVED
         

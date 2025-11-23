@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from purchase_requests.services import DecisionManager
 from .models import PurchaseRequest, Decision
-from accounts.models import User
 
 
 class PurchaseRequestListSerializer(serializers.ModelSerializer):
@@ -68,7 +67,8 @@ class DecisionCreateSerializer(serializers.ModelSerializer):
             'approval_level',
             'created_at',
         ]
-        read_only_fields = ['id', 'approval_level', 'created_at']
+        read_only_fields = ['id', 'approval_level', 'created_at', 'decision']
+        
     
     def create(self, validated_data):
         """
@@ -78,7 +78,7 @@ class DecisionCreateSerializer(serializers.ModelSerializer):
         purchase_request = self.context.get('purchase_request')
         approver = request.user
         
-        decision_type = validated_data.get('decision')
+        decision_type = self.context.get('decision_type')
         comment = validated_data.get('comment', None)
         
         # Use the safe, atomic manager method
