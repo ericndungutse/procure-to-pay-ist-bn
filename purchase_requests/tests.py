@@ -988,3 +988,320 @@ class PurchaseRequestApprovalTestCase(APITestCase):
             purchase_request=three_level_pr,
             approver=approver_level_3
         ).exists()
+
+
+class PurchaseRequestReceiptUploadTestCase(APITestCase):
+    """Test cases for receipt upload functionality."""
+    client: APIClient
+
+    def setUp(self):
+        """Set up test data for receipt upload tests."""
+        # Create staff user who creates purchase requests
+        self.staff_user = User.objects.create_user(
+            email='staff@test.com',
+            password='StrongPassword123',
+            username='staffuser',
+            full_name='Staff User',
+            role='staff'
+        )
+
+        # Create another staff user
+        self.other_staff_user = User.objects.create_user(
+            email='otherstaff@test.com',
+            password='StrongPassword123',
+            username='otherstaffuser',
+            full_name='Other Staff User',
+            role='staff'
+        )
+
+        # Create approver level 1
+        self.approver_level_1 = User.objects.create_user(
+            email='approver1@test.com',
+            password='StrongPassword123',
+            username='approver1',
+            full_name='Approver Level 1',
+            role='approver-level-1'
+        )
+
+        # Create approver level 2
+        self.approver_level_2 = User.objects.create_user(
+            email='approver2@test.com',
+            password='StrongPassword123',
+            username='approver2',
+            full_name='Approver Level 2',
+            role='approver-level-2'
+        )
+
+        # Create finance user (should not be able to upload receipt)
+        self.finance_user = User.objects.create_user(
+            email='finance@test.com',
+            password='StrongPassword123',
+            username='financeuser',
+            full_name='Finance User',
+            role='finance'
+        )
+
+        # Create normal user (should not be able to upload receipt)
+        self.normal_user = User.objects.create_user(
+            email='user@test.com',
+            password='StrongPassword123',
+            username='normaluser',
+            full_name='Normal User',
+            role='user'
+        )
+
+        # Create an approved purchase request
+        self.approved_purchase_request = PurchaseRequest.objects.create(
+            title="Approved Purchase Request",
+            description="Test description for receipt upload",
+            amount=5000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.APPROVED
+        )
+
+        # Create a pending purchase request
+        self.pending_purchase_request = PurchaseRequest.objects.create(
+            title="Pending Purchase Request",
+            description="Test description",
+            amount=3000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.PENDING
+        )
+
+        # Create a rejected purchase request
+        self.rejected_purchase_request = PurchaseRequest.objects.create(
+            title="Rejected Purchase Request",
+            description="Test description",
+            amount=2000,
+            created_by=self.staff_user,
+            status=PurchaseRequest.Status.REJECTED
+        )
+
+        # Create purchase request by another staff user
+        self.other_staff_purchase_request = PurchaseRequest.objects.create(
+            title="Other Staff Purchase Request",
+            description="Test description",
+            amount=4000,
+            created_by=self.other_staff_user,
+            status=PurchaseRequest.Status.APPROVED
+        )
+
+    def test_staff_can_update_receipt_for_own_approved_request(self):
+        """Staff user should be able to update receipt for their own approved purchase request."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.approved_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        assert response_json['status'] == 'success'
+        assert response_json['message'] == 'Receipt updated successfully'
+        assert 'data' in response_json
+        assert 'purchase_request' in response_json['data']
+        
+        # Verify receipt was updated in database
+        self.approved_purchase_request.refresh_from_db()
+        assert self.approved_purchase_request.receipt == 'https://cloudinary.com/receipt.pdf'
+        
+        # Verify response contains updated receipt
+        pr_data = response_json['data']['purchase_request']
+        assert pr_data['receipt'] == 'https://cloudinary.com/receipt.pdf'
+        assert pr_data['id'] == str(self.approved_purchase_request.id)
+
+    def test_staff_cannot_update_receipt_for_other_user_request(self):
+        """Staff user should not be able to update receipt for another user's purchase request."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.other_staff_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        response_json = response.json()
+        assert 'You do not have permission to view this purchase request.' in str(response_json)
+        
+        # Verify receipt was not updated
+        self.other_staff_purchase_request.refresh_from_db()
+        assert self.other_staff_purchase_request.receipt is None or self.other_staff_purchase_request.receipt == ''
+
+    def test_staff_cannot_update_receipt_for_pending_request(self):
+        """Staff user should not be able to update receipt for a pending purchase request."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.pending_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response_json = response.json()
+        assert 'must be approved' in str(response_json)
+        
+        # Verify receipt was not updated
+        self.pending_purchase_request.refresh_from_db()
+        assert self.pending_purchase_request.receipt is None or self.pending_purchase_request.receipt == ''
+
+    def test_staff_cannot_update_receipt_for_rejected_request(self):
+        """Staff user should not be able to update receipt for a rejected purchase request."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.rejected_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response_json = response.json()
+        assert 'must be approved' in str(response_json)
+        
+        # Verify receipt was not updated
+        self.rejected_purchase_request.refresh_from_db()
+        assert self.rejected_purchase_request.receipt is None or self.rejected_purchase_request.receipt == ''
+
+    def test_non_staff_cannot_update_receipt(self):
+        """Non-staff users should not be able to update receipt."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.approved_purchase_request.id})
+        
+        # Test with finance user
+        self.client.force_authenticate(user=self.finance_user)
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+        # Test with normal user
+        self.client.force_authenticate(user=self.normal_user)
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        
+        # Test with approver
+        self.client.force_authenticate(user=self.approver_level_1)
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_receipt_url_validation(self):
+        """Test that receipt URL validation works correctly."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.approved_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        # Test with invalid URL
+        invalid_data = {
+            'receipt_url': 'not-a-valid-url'
+        }
+        response = self.client.patch(receipt_url, invalid_data, format='json')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        
+        # Test with missing receipt_url
+        missing_data = {}
+        response = self.client.patch(receipt_url, missing_data, format='json')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        response_json = response.json()
+        assert 'receipt_url' in str(response_json)
+
+    def test_receipt_upload_response_structure(self):
+        """Test that receipt upload response has the correct structure."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.approved_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        
+        assert response.status_code == status.HTTP_200_OK
+        response_json = response.json()
+        
+        # Check response structure
+        assert 'status' in response_json
+        assert 'message' in response_json
+        assert 'data' in response_json
+        assert 'purchase_request' in response_json['data']
+        
+        # Check purchase request fields in response
+        pr_data = response_json['data']['purchase_request']
+        required_fields = [
+            'id', 'title', 'description', 'amount', 'status',
+            'created_at', 'created_by', 'proforma', 'receipt', 'purchase_order'
+        ]
+        
+        for field in required_fields:
+            assert field in pr_data, f"Field '{field}' is missing in response"
+        
+        assert pr_data['receipt'] == 'https://cloudinary.com/receipt.pdf'
+
+    def test_receipt_upload_updates_existing_receipt(self):
+        """Test that receipt upload can update an existing receipt URL."""
+        # Set initial receipt
+        self.approved_purchase_request.receipt = 'https://cloudinary.com/old-receipt.pdf'
+        self.approved_purchase_request.save()
+        
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.approved_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/new-receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        
+        assert response.status_code == status.HTTP_200_OK
+        
+        # Verify receipt was updated
+        self.approved_purchase_request.refresh_from_db()
+        assert self.approved_purchase_request.receipt == 'https://cloudinary.com/new-receipt.pdf'
+
+    def test_receipt_upload_nonexistent_purchase_request(self):
+        """Test receipt upload for a non-existent purchase request returns 404."""
+        import uuid
+        non_existent_id = uuid.uuid4()
+        receipt_url = reverse('upload-receipt', kwargs={'pk': non_existent_id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_receipt_upload_with_long_url(self):
+        """Test receipt upload with a long URL (within max length)."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.approved_purchase_request.id})
+        self.client.force_authenticate(user=self.staff_user)
+        
+        # Create a long but valid URL (max 500 chars)
+        long_url = 'https://cloudinary.com/' + 'a' * 470 + '.pdf'
+        receipt_data = {
+            'receipt_url': long_url
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        
+        assert response.status_code == status.HTTP_200_OK
+        self.approved_purchase_request.refresh_from_db()
+        assert self.approved_purchase_request.receipt == long_url
+
+    def test_receipt_upload_unauthenticated(self):
+        """Test that unauthenticated users cannot upload receipts."""
+        receipt_url = reverse('upload-receipt', kwargs={'pk': self.approved_purchase_request.id})
+        
+        receipt_data = {
+            'receipt_url': 'https://cloudinary.com/receipt.pdf'
+        }
+        
+        response = self.client.patch(receipt_url, receipt_data, format='json')
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
