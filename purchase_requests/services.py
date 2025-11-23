@@ -113,3 +113,23 @@ class DecisionManager:
             raise PermissionDenied("Only approvers can make decisions on purchase requests.")
         if approver.role not in purchase_request.approval_levels:
             raise PermissionDenied("Your approval level is not required for this purchase request.")
+
+
+class ReceiptService:
+    @staticmethod
+    def upload_receipt(purchase_request, user, receipt_url):
+        # Validate user owns the purchase request
+        if purchase_request.created_by != user:
+            raise PermissionDenied("You can only upload receipts for purchase requests you created.")
+        
+        # Validate purchase request is approved
+        if purchase_request.status != PurchaseRequest.Status.APPROVED:
+            raise ValidationError(
+                f"Cannot upload receipt. Purchase request must be approved. Current status: {purchase_request.get_status_display()}"
+            )
+        
+        # Update receipt URL
+        purchase_request.receipt = receipt_url
+        purchase_request.save(update_fields=['receipt'])
+        
+        return purchase_request

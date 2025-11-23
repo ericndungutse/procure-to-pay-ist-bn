@@ -23,6 +23,8 @@ class Command(BaseCommand):
             {'email': 'approver1@company.com', 'pwd': 'ApproverPassword123', 'name': 'A1 Manager', 'username': 'approver_one', 'role': ROLES['APPROVER_L1'], 'is_superuser': False},
             {'email': 'approver2@company.com', 'pwd': 'ApproverPassword123', 'name': 'A2 Director', 'username': 'approver_two', 'role': ROLES['APPROVER_L2'], 'is_superuser': False},
             {'email': 'finance_admin@company.com', 'pwd': 'SuperAdmin123', 'name': 'Finance Admin', 'username': 'finance_admin', 'role': ROLES['FINANCE'], 'is_superuser': True},
+            
+            {'email': 'staff2@company.com', 'pwd': 'StaffPassword123', 'name': 'Staff Member 2', 'username': 'staff_member_two', 'role': ROLES['STAFF'], 'is_superuser': False},
         ]
 
         for user_data in users_to_create:

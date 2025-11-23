@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from purchase_requests.services import DecisionManager
+from purchase_requests.services import DecisionManager, ReceiptService
 from .models import PurchaseRequest, Decision
 
 
@@ -90,3 +90,35 @@ class DecisionCreateSerializer(serializers.ModelSerializer):
         )
         
         return decision
+
+
+class ReceiptUploadSerializer(serializers.Serializer):
+    """Serializer for updating receipt URL on an approved purchase request."""
+    
+    receipt_url = serializers.URLField(
+        max_length=500,
+        help_text="URL of the receipt file uploaded to storage service (e.g., Cloudinary)"
+    )
+    
+    def validate_receipt_url(self, value):
+        """Validate receipt URL format."""
+        if not value:
+            raise serializers.ValidationError("Receipt URL is required.")
+        return value
+    
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        receipt_url = validated_data['receipt_url']
+        
+        # Use the service to perform business logic validation and update
+        updated_purchase_request = ReceiptService.upload_receipt(
+            purchase_request=instance,
+            user=request.user,
+            receipt_url=receipt_url
+        )
+        
+        return updated_purchase_request
+    
+    def save(self):
+        purchase_request = self.context.get('purchase_request')
+        return self.update(purchase_request, self.validated_data)

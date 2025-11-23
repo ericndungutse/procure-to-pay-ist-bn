@@ -3,7 +3,7 @@ from rest_framework import generics, status
 from purchase_requests.permissions import IsStaffOrReadOnly
 from .models import PurchaseRequest
 from .serializers import (DecisionCreateSerializer, PurchaseRequestCreateSerializer,
-    PurchaseRequestDetailSerializer, PurchaseRequestListSerializer)
+    PurchaseRequestDetailSerializer, PurchaseRequestListSerializer, ReceiptUploadSerializer)
 from .services import PurchaseRequestService
 from rest_framework.views import APIView
 
@@ -103,3 +103,29 @@ class PurchaseRequestRejectView(APIView):
                 "decision": DecisionCreateSerializer(decision).data
             }
         }, status=status.HTTP_201_CREATED)
+
+
+class PurchaseRequestReceiptUploadView(APIView):
+    """View for updating receipt URL on an approved purchase request."""
+    permission_classes = [IsStaffOrReadOnly]
+    
+    def patch(self, request, pk):
+        # Get purchase request (with access control)
+        purchase_request = PurchaseRequestService.get_purchase_request_by_id(request.user, pk)
+        
+        # Update serializer with context
+        serializer = ReceiptUploadSerializer(
+            data=request.data,
+            context={'request': request, 'purchase_request': purchase_request}
+        )
+        
+        serializer.is_valid(raise_exception=True)
+        updated_purchase_request = serializer.save()
+        
+        return Response({
+            "status": "success",
+            "message": "Receipt updated successfully",
+            "data": {
+                "purchase_request": PurchaseRequestDetailSerializer(updated_purchase_request).data
+            }
+        }, status=status.HTTP_200_OK)
