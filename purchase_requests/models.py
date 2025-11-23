@@ -18,7 +18,7 @@ class PurchaseRequest(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True)
     amount = models.IntegerField()
     status = models.CharField(
         max_length=20,
@@ -82,7 +82,7 @@ class Decision(models.Model):
         help_text="The approval level at which this decision was made (e.g., 'approver-level-1', 'approver-level-2')"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    comment = models.TextField(blank=True, null=True, help_text="Optional comment from the approver")
+    comment = models.TextField(blank=True, help_text="Optional comment from the approver")
 
     class Meta:
         db_table = 'decisions'

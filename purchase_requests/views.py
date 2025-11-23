@@ -64,13 +64,13 @@ class PurchaseRequestRetrieveView(generics.RetrieveAPIView):
         
         return Response(response, status=status.HTTP_200_OK)
     
-class PurchaseRequestDecisionView(APIView):
+class PurchaseRequestApproveView(APIView):
     def post(self, request, pk):
         purchase_request = PurchaseRequestService.get_purchase_request_by_id(request.user, pk)
         
         serializer = DecisionCreateSerializer(
             data=request.data,
-            context={'request': request, 'purchase_request': purchase_request}
+            context={'request': request, 'purchase_request': purchase_request, 'decision_type': "approved"}
         )
         
         serializer.is_valid(raise_exception=True)
@@ -78,7 +78,27 @@ class PurchaseRequestDecisionView(APIView):
 
         return Response({
             "status": "success",
-            "message": "Purchase Decision Created",
+            "message": "Purchase Approved Successfully",
+            "data": {
+                "decision": DecisionCreateSerializer(decision).data
+            }
+        }, status=status.HTTP_201_CREATED)
+        
+class PurchaseRequestRejectView(APIView):
+    def post(self, request, pk):
+        purchase_request = PurchaseRequestService.get_purchase_request_by_id(request.user, pk)
+        
+        serializer = DecisionCreateSerializer(
+            data=request.data,
+            context={'request': request, 'purchase_request': purchase_request, 'decision_type': "rejected"}
+        )
+        
+        serializer.is_valid(raise_exception=True)
+        decision = serializer.save();
+
+        return Response({
+            "status": "success",
+            "message": "Purchase Rejected Successfully",
             "data": {
                 "decision": DecisionCreateSerializer(decision).data
             }

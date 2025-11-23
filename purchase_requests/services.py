@@ -35,11 +35,7 @@ class PurchaseRequestService:
 class DecisionManager:
     @staticmethod
     def create_decision(purchase_request, approver, decision_type, comment=None):
-        # Validate approver role early (pure in-memory check)
-        if not approver.role.startswith('approver-level-'):
-            raise PermissionDenied("Only approvers can make decisions on purchase requests.")
-        if approver.role not in purchase_request.approval_levels:
-            raise PermissionDenied("Your approval level is not required for this purchase request.")
+        DecisionManager._validate_approver(purchase_request, approver);
 
         try:
             with transaction.atomic():
@@ -109,4 +105,11 @@ class DecisionManager:
         except IntegrityError as exc:
             # If a concurrent transaction created the same (purchase_request, approver) record
             # and there's a unique constraint, handle it gracefully.
-            raise ValidationError("A decision was created concurrently. Please refresh and try again.") from exc
+            raise ValidationError(str(exc)) from exc
+    
+    @staticmethod
+    def _validate_approver(purchase_request, approver):
+        if not approver.role.startswith('approver-level-'):
+            raise PermissionDenied("Only approvers can make decisions on purchase requests.")
+        if approver.role not in purchase_request.approval_levels:
+            raise PermissionDenied("Your approval level is not required for this purchase request.")

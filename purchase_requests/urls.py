@@ -1,10 +1,11 @@
 from django.urls import path
-from .views import (PurchaseRequestDecisionView, PurchaseRequestListCreateView,
+from .views import (PurchaseRequestApproveView, PurchaseRequestListCreateView, PurchaseRequestRejectView,
     PurchaseRequestRetrieveView)
 
 urlpatterns = [
     path('', PurchaseRequestListCreateView.as_view(), name='purchase-request-list-create'),
     path('<uuid:pk>/', PurchaseRequestRetrieveView.as_view(), name='purchase-request-retrieve'),
-    path('<uuid:pk>/decide', PurchaseRequestDecisionView.as_view(), name='decide-on-purchase-request'),
+    path('<uuid:pk>/approve', PurchaseRequestApproveView.as_view(), name='approve-purchase-request'),
+    path('<uuid:pk>/reject', PurchaseRequestRejectView.as_view(), name='reject-purchase-request'),
 ]
 
