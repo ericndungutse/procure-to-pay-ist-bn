@@ -96,20 +96,19 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-
 DATABASES = {
     'default': {
         # 1. Specify the engine
         'ENGINE': 'django.db.backends.postgresql',
         
         # 2. Database details
-        'NAME': config('DB_NAME'),        # 'procure_to_pay_ist'
-        'USER': config('DB_USER'),        # 'postgres'
-        'PASSWORD': config('DB_PASSWORD'),# 'eric'
+        'NAME': config('POSTGRES_DB'),        # 'procure_to_pay_ist'
+        'USER': config('POSTGRES_USER'),        # 'postgres'
+        'PASSWORD': config('POSTGRES_PASSWORD'),# 'eric'
         
         # 3. Connection details
-        'HOST': config('DB_HOST', default='localhost'),  # fallback to localhost
-        'PORT': config('DB_PORT', default='5432'),       # fallback to 5432
+        'HOST': config('POSTGRES_HOST', default='localhost'),  # fallback to localhost
+        'PORT': config('POSTGRES_PORT', default='5432'),       # fallback to 5432
     }
 }
 

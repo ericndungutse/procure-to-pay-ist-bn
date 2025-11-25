@@ -1,26 +1,21 @@
-name: Pipeline
+name: Pipeline - CI
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - '!*.md'
   pull_request:
     branches: [main]
     paths-ignore:
-      - '!*.md'
-
+      - "!*.md"
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
       SECRET_KEY: test-secret-key
-      DEBUG: 'True'
-      DB_NAME: test_db
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_HOST: localhost
-      DB_PORT: 5432
+      DEBUG: "True"
+      POSTGRES_DB: test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
 
     services:
       postgres:
@@ -43,7 +38,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -52,4 +47,4 @@ jobs:
         run: python manage.py migrate --noinput
 
       - name: Run tests
-        run: pytest
+        run: pytest -v
