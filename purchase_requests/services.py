@@ -1,3 +1,5 @@
+from purchase_requests.service.function_invoker_service import FunctionEnvokerService
+from django.conf import settings
 from .models import PurchaseRequest, Decision
 from django.shortcuts import get_object_or_404
 from django.db import transaction
@@ -99,7 +101,12 @@ class DecisionManager:
                     if set(pr.approval_levels) == approved_levels:
                         pr.status = PurchaseRequest.Status.APPROVED
                         pr.save(update_fields=['status'])
-
+                        
+                        lambda_fn_payload = DecisionManager._create_lambda_fn_payload(pr)
+                        if not settings.IS_TESTING:
+                            FunctionEnvokerService.envoke_function("FileProcessor", lambda_fn_payload)
+                        else:
+                            print("Skipping function invocation in testing mode")
                 return decision
 
         except IntegrityError as exc:
@@ -113,6 +120,17 @@ class DecisionManager:
             raise PermissionDenied("Only approvers can make decisions on purchase requests.")
         if approver.role not in purchase_request.approval_levels:
             raise PermissionDenied("Your approval level is not required for this purchase request.")
+        
+    @staticmethod   
+    def _create_lambda_fn_payload(pr):
+        return {
+            "id": str(pr.id),
+            "title": pr.title,
+            "description": pr.description,
+            "amount": pr.amount,
+            "proforma": pr.proforma
+        }
+        
 
 
 class ReceiptService:
