@@ -14,6 +14,11 @@ from datetime import timedelta
 from pathlib import Path
 from decouple import config
 
+AWS_ACCESS_KEY_ID=config('AWS_ACCESS_KEY_ID')
+AWS_SECRET_KEY=config('AWS_SECRET_KEY')
+AWS_REGION=config('AWS_REGION')
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
