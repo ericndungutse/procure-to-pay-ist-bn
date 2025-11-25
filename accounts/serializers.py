@@ -31,3 +31,12 @@ class LoginSerializer(serializers.Serializer):
             return data
           
         raise serializers.ValidationError("Must include email and password.")
+
+
+class UserSerializer(serializers.Serializer):
+    """Serializer for exposing current authenticated user information."""
+    user_id = serializers.IntegerField(source='id')
+    username = serializers.CharField()
+    fullname = serializers.CharField(source='full_name')
+    email = serializers.EmailField()
+    role = serializers.CharField()
