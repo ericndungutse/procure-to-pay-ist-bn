@@ -3,6 +3,8 @@ import pika
 import django
 import os
 
+from django.conf import settings
+
 # -----------------------------
 # Setup Django (so we can use ORM)
 # -----------------------------
@@ -14,8 +16,7 @@ from purchase_requests.models import PurchaseRequest  # import your models here
 # -----------------------------
 # RabbitMQ URL from environment
 # -----------------------------
-# RABBITMQ_URL = os.environ.get("RABBITMQ_URL")
-RABBITMQ_URL = "amqps://twfcsfdi:g8yfowCdbcdLzFGHtDPl3lR2dUKYblB7@seal.lmq.cloudamqp.com/twfcsfdi"
+RABBITMQ_URL = settings.RABBITMQ_URL
 if not RABBITMQ_URL:
     raise RuntimeError("RABBITMQ_URL environment variable is not set")
 
