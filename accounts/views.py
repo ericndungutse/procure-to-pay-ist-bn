@@ -1,8 +1,8 @@
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
 from rest_framework_simplejwt.tokens import RefreshToken
-from accounts.serializers import LoginSerializer
+from accounts.serializers import LoginSerializer, UserSerializer
 from accounts.services import AuthService
 
 class LoginView(generics.GenericAPIView):
@@ -29,5 +29,22 @@ class LoginView(generics.GenericAPIView):
       }
     }
     
+    return Response(response, status=status.HTTP_200_OK)
+  
+
+class MeView(generics.GenericAPIView):
+  """Return information about the currently authenticated user."""
+  permission_classes = [IsAuthenticated]
+  serializer_class = UserSerializer
+
+  def get(self, request, *args, **kwargs):
+    user = request.user
+    serializer = self.get_serializer(user)
+    response = {
+      "status": "success",
+      "data": {
+        "user": serializer.data
+      }
+    }
     return Response(response, status=status.HTTP_200_OK)
   
