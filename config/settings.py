@@ -13,10 +13,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 from decouple import config
+import sys
 
-AWS_ACCESS_KEY_ID=config('AWS_ACCESS_KEY_ID')
-AWS_SECRET_KEY=config('AWS_SECRET_KEY')
-AWS_REGION=config('AWS_REGION')
+AWS_ACCESS_KEY_ID=config('AWS_ACCESS_KEY_ID', default='ci_placeholder_key')
+AWS_SECRET_KEY=config('AWS_SECRET_KEY', default='ci_placeholder_key')
+AWS_REGION=config('AWS_REGION', default='ci_placeholder_key')
 
 
 
@@ -143,6 +144,8 @@ USE_I18N = True
 
 USE_TZ = True
 
+IS_TESTING = 'pytest' in sys.modules
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -153,7 +156,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-RABBITMQ_URL=config('RABBITMQ_URL')
+RABBITMQ_URL=config('RABBITMQ_URL', default='ci_placeholder_key')
 
 
 SIMPLE_JWT = {

@@ -1,4 +1,5 @@
 from purchase_requests.service.function_invoker_service import FunctionEnvokerService
+from django.conf import settings
 from .models import PurchaseRequest, Decision
 from django.shortcuts import get_object_or_404
 from django.db import transaction
@@ -102,7 +103,10 @@ class DecisionManager:
                         pr.save(update_fields=['status'])
                         
                         lambda_fn_payload = DecisionManager._create_lambda_fn_payload(pr)
-                        FunctionEnvokerService.envoke_function("FileProcessor", lambda_fn_payload)
+                        if not settings.IS_TESTING:
+                            FunctionEnvokerService.envoke_function("FileProcessor", lambda_fn_payload)
+                        else:
+                            print("Skipping function invocation in testing mode")
                 return decision
 
         except IntegrityError as exc:
