@@ -18,7 +18,7 @@ class PurchaseRequest(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, default="Description")
     amount = models.IntegerField()
     status = models.CharField(
         max_length=20,
@@ -82,7 +82,7 @@ class Decision(models.Model):
         help_text="The approval level at which this decision was made (e.g., 'approver-level-1', 'approver-level-2')"
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    comment = models.TextField(blank=True, help_text="Optional comment from the approver")
+    comment = models.TextField(blank=True, help_text="Optional comment from the approver", default="No comment")
 
     class Meta:
         db_table = 'decisions'
@@ -94,3 +94,29 @@ class Decision(models.Model):
 
     def __str__(self):
         return f"{self.purchase_request.title} - {self.approver.full_name} - {self.get_decision_display()} ({self.approval_level})"
+
+
+class PurchaseOrderReceiptMismatch(models.Model):
+    """
+    Minimal mismatch record matching incoming message payload:
+
+        {
+            "purchaseRequestId": "...",
+            "result": "mismatch detected, description..."
+        }
+
+    We store `purchase_request_id` as a UUID and `result` as a plain string
+    describing the verifier output.
+        """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    purchase_request_id = models.UUIDField()
+    result = models.TextField()
+
+    class Meta:
+        db_table = 'purchase_order_receipt_mismatches'
+        verbose_name = 'Purchase Order / Receipt Mismatch'
+        verbose_name_plural = 'Purchase Order / Receipt Mismatches'
+
+    def __str__(self):
+        return f"Mismatch for PR {self.purchase_request_id}"

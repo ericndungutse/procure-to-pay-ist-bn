@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from purchase_requests.services import DecisionManager, ReceiptService
 from .models import PurchaseRequest, Decision
+from .models import PurchaseOrderReceiptMismatch
 
 
 class PurchaseRequestListSerializer(serializers.ModelSerializer):
@@ -122,3 +123,11 @@ class ReceiptUploadSerializer(serializers.Serializer):
     def save(self):
         purchase_request = self.context.get('purchase_request')
         return self.update(purchase_request, self.validated_data)
+
+
+class PurchaseOrderReceiptMismatchSerializer(serializers.ModelSerializer):
+    """Serializer for PurchaseOrderReceiptMismatch (minimal)."""
+
+    class Meta:
+        model = PurchaseOrderReceiptMismatch
+        fields = ['id', 'purchase_request_id', 'result']
