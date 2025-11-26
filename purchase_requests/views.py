@@ -6,6 +6,9 @@ from .serializers import (DecisionCreateSerializer, PurchaseRequestCreateSeriali
     PurchaseRequestDetailSerializer, PurchaseRequestListSerializer, ReceiptUploadSerializer)
 from .services import PurchaseRequestService
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from .models import PurchaseOrderReceiptMismatch
+from .serializers import PurchaseOrderReceiptMismatchSerializer
 
 
 class PurchaseRequestListCreateView(generics.ListCreateAPIView):
@@ -127,5 +130,22 @@ class PurchaseRequestReceiptUploadView(APIView):
             "message": "Receipt updated successfully",
             "data": {
                 "purchase_request": PurchaseRequestDetailSerializer(updated_purchase_request).data
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class PurchaseOrderMismatchListView(APIView):
+    """Unprotected endpoint that returns all recorded purchase order / receipt mismatches."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        mismatches = PurchaseOrderReceiptMismatch.objects.all()
+        serializer = PurchaseOrderReceiptMismatchSerializer(mismatches, many=True)
+        return Response({
+            "status": "success",
+            "message": "Mismatches retrieved successfully",
+            "data": {
+                "size": len(serializer.data),
+                "mismatches": serializer.data
             }
         }, status=status.HTTP_200_OK)
