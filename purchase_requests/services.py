@@ -149,5 +149,24 @@ class ReceiptService:
         # Update receipt URL
         purchase_request.receipt = receipt_url
         purchase_request.save(update_fields=['receipt'])
-        
+
+        # Invoke lambda to verify purchase vs receipt
+        lambda_payload = {
+            "action": "verifyPurchase",
+            "payload": {
+                "purchaseRequestId": str(purchase_request.id),
+                "purchaseOrder": purchase_request.purchase_order,
+                "receipt": receipt_url,
+            }
+        }
+
+        if not settings.IS_TESTING:
+            try:
+                FunctionEnvokerService.envoke_function("FileProcessor", lambda_payload)
+            except Exception as exc:
+                # Log and continue; receipt has been saved regardless
+                print(f"Failed to invoke FileProcessor function: {exc}")
+        else:
+            print("Skipping function invocation in testing mode")
+
         return purchase_request
