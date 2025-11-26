@@ -7,6 +7,7 @@ from rest_framework import status
 User = get_user_model()
 LOGIN_URL = reverse('api_auth_login')
 ME_URL = reverse('api_auth_me')
+LOGOUT_URL = reverse('api_auth_logout')
 
 
 class LoginTestCase(APITestCase):
@@ -84,3 +85,31 @@ class LoginTestCase(APITestCase):
         assert user_data is not None
         assert user_data.get('email') == self.email
         assert user_data.get('username') == self.username
+
+    def test_logout_blacklists_token_and_denies_access(self):
+        """Login, logout (blacklist), then ensure token is rejected."""
+        # Log in to obtain token
+        response = self.client.post(
+            LOGIN_URL,
+            {'email': self.email, 'password': self.password},
+            format='json'
+        )
+        assert response.status_code == status.HTTP_200_OK
+        access_token = response.json().get('data', {}).get('access_token')
+        assert access_token is not None
+
+        # Call logout
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        logout_resp = self.client.post(LOGOUT_URL)
+        assert logout_resp.status_code == status.HTTP_200_OK
+        logout_json = logout_resp.json()
+        assert logout_json.get('status') == 'success'
+
+        # Subsequent request with same token should be unauthorized
+        me_resp = self.client.get(ME_URL)
+        assert me_resp.status_code in (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN)
+
+        # Ensure BlacklistedToken entry exists
+        from accounts.models import BlacklistedToken
+        # The jti of the token is stored, so check at least one entry exists
+        assert BlacklistedToken.objects.count() >= 1
