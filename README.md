@@ -179,6 +179,35 @@ Once your development server is running, you can interact with the API in severa
 
 **Note**: The Postman documentation shows example requests. When testing locally, make sure your development server is running and use `http://localhost:8000` as the base URL.
 
+## Frontend
+
+- **Deployed frontend (demo)**: https://procure-to-pay-sigma.vercel.app/
+- **Frontend repository**: https://github.com/ericndungutse/procure-to-pay-fn-frontend
+
+## Endpoint Status
+
+This project is under active development; the table below summarizes the current status of key API endpoints and features so you know what is implemented, partially implemented, or not yet integrated.
+
+- `POST /api/v1/accounts/login/` — Implemented
+
+- Purchase Requests
+  - `GET /api/v1/requests/` — Implemented (but server-side filtering by role is implemented; advanced filtering by query params is NOT implemented)
+  - `POST /api/v1/requests/` — Implemented
+  - `GET /api/v1/requests/{id}/` — Implemented
+  - `PATCH /api/v1/requests/{id}/` — NOT implemented (update endpoint not available)
+  - `PATCH /api/v1/requests/{id}/upload-receipt` — Implemented (saves receipt URL and triggers verification call)
+
+- Decisions / Approvals
+  - `POST /api/v1/requests/{id}/approve` — Decision creation implemented (concurrency-safe manager exists)
+  - `POST /api/v1/requests/{id}/reject` — Implemented
+  - Integration note: Decision feature is implemented at the service/manager level but some integrations (e.g., UI hooks or downstream consumers) may still be pending.
+
+- Purchase Order / Receipt Mismatch
+  - Verification workflow exists in the file-processor service and emits mismatch messages when a mismatch is detected.
+  - `PurchaseOrderReceiptMismatch` model and consumer handling exist in this repo to record mismatches, but full end-to-end integration with the UI and downstream workflows is NOT complete.
+
+If you depend on any of these features for automated flows, treat the unimplemented items as TODOs and contact the maintainers for timelines.
+
 ## Running Tests
 
 Run the test suite to verify everything is working:
