@@ -16,22 +16,23 @@ jobs:
       DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
   deploy:
-    name: "[Prod Depl] Deploye to ACA"
+    name: "[Prod Depl] Deploy to ACA"
     runs-on: ubuntu-latest
     needs: test_build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Login to Azure
       - name: Login into Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      # Deploy to Azure Container App
       - name: Deploy to Azure Container App
-        uses: azure/container-apps-deploy-action@v1
-        with:
-          registryUrl: ericndungutse.docker.io
-          containerAppName: procure-to-pay-api
-          resourceGroup: procure-to-pay-ist_group
-          imageToDeploy: ericndungutse/procure-to-pay-bn:latest
+        run: |
+          az containerapp update \
+            --name procure-to-pay-api \
+            --resource-group procure-to-pay-ist_group \
+            --image ericndungutse/procure-to-pay-bn
