@@ -39,3 +39,18 @@ class User(AbstractBaseUser):
 
     def __str__(self):
         return self.email
+
+
+class BlacklistedToken(models.Model):
+    """Stores JWT 'jti' values for tokens that have been logged out.
+
+    The authentication backend will check this table and reject requests
+    using any token whose jti is present here.
+    """
+    jti = models.CharField(max_length=255, unique=True)
+    token = models.TextField(blank=True, null=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.jti
