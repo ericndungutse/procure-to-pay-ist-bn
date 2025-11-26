@@ -34,8 +34,3 @@ The project is under active development. The table below summarizes implemented,
 - If you rely on the update purchase request endpoint or advanced filtering, treat those as TODO items.
 - Consider adding pagination and filtering to the mismatches endpoint if you expect many records.
 - For production, restrict the mismatches listing endpoint (current implementation is unprotected). Implement authentication/authorization for any admin or sensitive endpoints.
-
-If you want, I can:
-- add automated tests for the mismatch consumer and endpoint,
-- restrict or add filtering to the `mismatches/` endpoint,
-- or create a short changelog entry and commit the docs update for you.
