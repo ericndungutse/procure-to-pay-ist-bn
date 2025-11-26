@@ -84,5 +84,5 @@ class LogoutView(APIView):
       'expires_at': expires,
     })
 
-    return Response({"status":"success","message":"Logged out"}, status=status.HTTP_200_OK)
+    return Response({"status":"success","message":"Logged out. Bye!"}, status=status.HTTP_200_OK)
   
