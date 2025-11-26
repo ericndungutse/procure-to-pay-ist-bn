@@ -6,71 +6,19 @@ on:
     paths-ignore:
       - "!*.md"
   workflow_dispatch:
+
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    env:
-      SECRET_KEY: test-secret-key
-      DEBUG: "True"
-      POSTGRES_DB: test_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run migrations
-        run: python manage.py migrate --noinput
-
-      - name: Run tests
-        run: pytest -v
-
-  build:
-    runs-on: ubuntu-latest
-    needs: test
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Log into Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Build Docker image
-        run: docker build -t ericndungutse/procure-to-pay-bn:latest .
-
-      - name: Push Docker image
-        run: docker push ericndungutse/procure-to-pay-bn:latest
+  test_build:
+    name: "[Prod Depl] Run tests & Build Image"
+    uses: ./.github/workflows/test_build.yml
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
   deploy:
+    name: "[Prod Depl] Deploye to ACA"
     runs-on: ubuntu-latest
-    needs: build
+    needs: test_build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -78,7 +26,7 @@ jobs:
       - name: Login into Azure
         uses: azure/login@v1
         with:
-          creds: ${{secrets.AZURE_CREDENTIALS}}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Container App
         uses: azure/container-apps-deploy-action@v1

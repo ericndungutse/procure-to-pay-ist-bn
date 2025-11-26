@@ -55,8 +55,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # This tells DRF to look for a JWT token in the 'Authorization: Bearer <token>' header
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        # Use our custom authentication which checks the token blacklist
+        'accounts.authentication.CustomJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         # Denies access by default unless authenticated (used by your future protected views)

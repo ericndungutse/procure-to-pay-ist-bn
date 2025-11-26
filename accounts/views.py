@@ -1,9 +1,12 @@
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import generics, status
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from accounts.serializers import LoginSerializer, UserSerializer
 from accounts.services import AuthService
+from accounts.models import BlacklistedToken
+from datetime import datetime, timezone
 
 class LoginView(generics.GenericAPIView):
   permission_classes = [AllowAny]
@@ -47,4 +50,39 @@ class MeView(generics.GenericAPIView):
       }
     }
     return Response(response, status=status.HTTP_200_OK)
+  
+
+class LogoutView(APIView):
+  """Blacklist the currently used access token so it cannot be used again.
+
+  Expects an `Authorization: Bearer <token>` header. The endpoint is protected
+  with `IsAuthenticated` so a valid token is required to call it.
+  """
+  permission_classes = [IsAuthenticated]
+
+  def post(self, request, *args, **kwargs):
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+      return Response({"status":"error","message":"Authorization header missing"}, status=status.HTTP_400_BAD_REQUEST)
+
+    raw_token = auth.split()[1]
+    try:
+      token = AccessToken(raw_token)
+    except Exception:
+      return Response({"status":"error","message":"Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+
+    jti = token.get('jti')
+    exp = token.get('exp')
+    if not jti or not exp:
+      return Response({"status":"error","message":"Token missing required claims"}, status=status.HTTP_400_BAD_REQUEST)
+
+    expires = datetime.fromtimestamp(exp, tz=timezone.utc)
+
+    # Create blacklist entry (idempotent)
+    BlacklistedToken.objects.get_or_create(jti=jti, defaults={
+      'token': raw_token,
+      'expires_at': expires,
+    })
+
+    return Response({"status":"success","message":"Logged out"}, status=status.HTTP_200_OK)
   

@@ -5,46 +5,35 @@ on:
     branches: [main]
     paths-ignore:
       - "!*.md"
+
 jobs:
-  test:
+  test_build:
+    name: Run tests and build docker image
+    uses: ./.github/workflows/test_build.yml
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+  qa_deploy:
+    name: Deploy to QA Environment
     runs-on: ubuntu-latest
-    env:
-      SECRET_KEY: test-secret-key
-      DEBUG: "True"
-      POSTGRES_DB: test_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_db
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
+    needs: test_build
     steps:
-      - uses: actions/checkout@v4
+      - name: Trigger QA Deployment on Render
+        run: |
+          set -euo pipefail
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+          if [ -z "${{ secrets.RENDER_DEPLOY_KEY }}" ]; then
+            echo "ERROR: RENDER_DEPLOY_KEY is not set. Failing."
+            exit 1
+          fi
+          echo "RENDER_DEPLOY_KEY is present."
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+          RESPONSE=$(curl -s -X POST "https://api.render.com/deploy/srv-d4j0el63jp1c73cbh8jg?key=${{ secrets.RENDER_DEPLOY_KEY }}")
+          echo "Render deployment response: $RESPONSE"
 
-      - name: Run migrations
-        run: python manage.py migrate --noinput
-
-      - name: Run tests
-        run: pytest -v
+          if [[ "$RESPONSE" != *'"deploy":{"id":'* ]]; then
+            echo "ERROR: Unexpected response from Render. Failing job."
+            exit 1
+          fi
+          echo "Deployment triggered successfully. Deploy ID detected."
