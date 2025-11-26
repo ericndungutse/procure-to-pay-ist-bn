@@ -9,9 +9,14 @@ on:
 
 jobs:
   test_build:
+    name: "[Prod Depl] Run tests & Build Image"
     uses: ./.github/workflows/test_build.yml
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
   deploy:
+    name: "[Prod Depl] Deploye to ACA"
     runs-on: ubuntu-latest
     needs: test_build
     steps:

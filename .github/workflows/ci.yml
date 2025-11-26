@@ -8,7 +8,11 @@ on:
 
 jobs:
   test_build:
+    name: Run tests and build docker image
     uses: ./.github/workflows/test_build.yml
+    secrets:
+      DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+      DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
   qa_deploy:
     name: Deploy to QA Environment

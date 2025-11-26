@@ -12,5 +12,5 @@ class CustomJWTAuthentication(JWTAuthentication):
         token = super().get_validated_token(raw_token)
         jti = token.get('jti')
         if jti and BlacklistedToken.objects.filter(jti=jti).exists():
-            raise AuthenticationFailed('Token is blacklisted')
+            raise AuthenticationFailed('Token has been blacklisted! Please login again to get access.')
         return token
