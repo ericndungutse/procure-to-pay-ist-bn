@@ -184,6 +184,10 @@ Once your development server is running, you can interact with the API in severa
 - **Deployed frontend (demo)**: https://procure-to-pay-sigma.vercel.app/
 - **Frontend repository**: https://github.com/ericndungutse/procure-to-pay-fn-frontend
 
+## Related Services
+
+- **File Service (Lambda)**: https://github.com/ericndungutse/procure-to-pay-ist-file-service - Repository containing the Lambda function code that processes files
+
 ## Endpoint Status
 
 This project is under active development; the table below summarizes the current status of key API endpoints and features so you know what is implemented, partially implemented, or not yet integrated.
